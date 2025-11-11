@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tricore HIB - Order Status</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --arrived: #9b59b6;
+            --delivered: #1abc9c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .status-pending {
+            color: var(--warning);
+            font-weight: 600;
+        }
+        
+        .status-arrived {
+            color: var(--arrived);
+            font-weight: 600;
+        }
+        
+        .status-delivered {
+            color: var(--delivered);
+            font-weight: 600;
+        }
+        
+        .status-completed {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .welcome-message {
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        .arrived-message {
+            background: linear-gradient(135deg, var(--arrived), #8e44ad);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+        
+        .delivered-message {
+            background: linear-gradient(135deg, var(--delivered), #16a085);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3);
+        }
+
+        .pending-message { /* Added for Pending status */
+            background: linear-gradient(135deg, var(--warning), #d35400);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+        
+        .admin-panel {
+            display: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+            border-top: 1px solid #ecf0f1;
+        }
+        
+        .status-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        
+        .status-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .status-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-step.active .status-indicator {
+            background: var(--secondary);
+        }
+        
+        .status-step.completed .status-indicator {
+            background: var(--success);
+        }
+        
+        .status-step.arrived .status-indicator {
+            background: var(--arrived);
+        }
+        
+        .status-step.delivered .status-indicator {
+            background: var(--delivered);
+        }
+
+        .status-step.pending .status-indicator { /* Added for Pending */
+             background: var(--warning);
+        }
+        
+        .multiple-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+            }
+            
+            .status-timeline {
+                flex-wrap: wrap;
+            }
+            
+            .status-step {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">Tricore HIB</div>
+            <div class="tagline">Premium Keychains & Accessories</div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="card" id="user-section">
+            <h2 class="card-title">Check Your Order Status</h2>
+            <div class="form-group">
+                <label for="user-name">Enter Your Name</label>
+                <input type="text" id="user-name" placeholder="Enter your name here">
+            </div>
+            <div class="form-group">
+                <label for="user-department">Select Your Department (Optional)</label>
+                <select id="user-department">
+                    <option value="">Select Department (Optional)</option>
+                    <option value="AI">AI</option>
+                    <option value="AU">AU</option>
+                    <option value="BBA">BBA</option>
+                    <option value="CH">CH</option>
+                    <option value="CIV">CIV</option>
+                    <option value="CS">CS</option>
+                    <option value="CYS">CYS</option>
+                    <option value="DS">DS</option>
+                    <option value="EE">EE</option>
+                    <option value="ENV">ENV</option>
+                    <option value="ES">ES</option>
+                    <option value="ESM">ESM</option>
+                    <option value="IBM">IBM</option>
+                    <option value="IME">IME</option>
+                    <option value="IST">IST</option>
+                    <option value="MC">MC</option>
+                    <option value="ME">ME</option>
+                    <option value="MIN">MIN</option>
+                    <option value="PE">PE</option>
+                    <option value="RIS">RIS</option>
+                    <option value="SE">SE</option>
+                    <option value="Unknown">Unknown</option>
+                </select>
+            </div>
+            <button class="btn" id="check-status">Check Status</button>
+            
+            <div id="status-result" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div class="card" id="admin-login-section">
+            <h2 class="card-title">Admin Login</h2>
+            <div class="form-group">
+                <label for="admin-username">Username</label>
+                <input type="text" id="admin-username" placeholder="Enter admin username">
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" placeholder="Enter admin password">
+            </div>
+            <button class="btn" id="admin-login">Login</button>
+        </div>
+        
+        <div class="admin-panel" id="admin-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="orders">Manage Orders</div>
+                <div class="tab" data-tab="add-order">Add New Order</div>
+            </div>
+            
+            <button class="btn btn-danger logout-btn" id="admin-logout">Logout</button>
+            
+            <div class="tab-content active" id="orders-tab">
+                <div class="search-box">
+                    <input type="text" id="search-order" placeholder="Search by name or roll number...">
+                </div>
+                
+                <table id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Roll Number</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-content" id="add-order-tab">
+                <div class="card">
+                    <h3 class="card-title">Add New Order</h3>
+                    <div class="form-group">
+                        <label for="new-name">Name</label>
+                        <input type="text" id="new-name" placeholder="Enter full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-department">Department</label>
+                        <select id="new-department">
+                            <option value="AI">AI</option>
+                            <option value="AU">AU</option>
+                            <option value="BBA">BBA</option>
+                            <option value="CH">CH</option>
+                            <option value="CIV">CIV</option>
+                            <option value="CS">CS</option>
+                            <option value="CYS">CYS</option>
+                            <option value="DS">DS</option>
+                            <option value="EE">EE</option>
+                            <option value="ENV">ENV</option>
+                            <option value="ES">ES</option>
+                            <option value="ESM">ESM</option>
+                            <option value="IBM">IBM</option>
+                            <option value="IME">IME</option>
+                            <option value="IST">IST</option>
+                            <option value="MC">MC</option>
+                            <option value="ME">ME</option>
+                            <option value="MIN">MIN</option>
+                            <option value="PE">PE</option>
+                            <option value="RIS">RIS</option>
+                            <option value="SE">SE</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-roll">Roll Number</label>
+                        <input type="text" id="new-roll" placeholder="e.g., 2025-AI-280">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-category">Category</label>
+                        <select id="new-category">
+                            <option value="Premium">Premium</option>
+                            <option value="Standard">Standard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-status">Status</label>
+                        <select id="new-status">
+                            <option value="Pending">Pending</option>
+                            <option value="Arrived">Arrived</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" id="add-order-btn">Add Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; Designed by Imam Ahmad.</p>
+            <p>&copy; For any query: Email: iaperma63@gmail.com</p>
+            <p>&copy; All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- START: CACHE FIX ---
+        // This code checks if the user has the old "Pending" list and clears it.
+        const appVersion = "v2_arrived"; // We give our new data a "version"
+        const storedVersion = localStorage.getItem('tricoreAppVersion');
+
+        if (storedVersion !== appVersion) {
+            // If the browser's version is not "v2_arrived",
+            // it means they have the old "Pending" data.
+            // We must delete it.
+            localStorage.removeItem('tricoreOrders');
+            // Now we set the browser's version to the new one.
+            localStorage.setItem('tricoreAppVersion', appVersion);
+        }
+        // --- END: CACHE FIX ---
+
+
+        // Sample data from the Excel sheet including AU students
+        // *** ALL STATUSES ARE NOW "Arrived" ***
+        const initialOrders = [
+            { name: "MUHAMMAD HAMZA", department: "AI", roll: "2025-AI-280", category: "Premium", status: "Arrived" },
+            { name: "SYED HASSAN MURTAZA", department: "AI", roll: "2025-AI-327", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD SANAULLAH", department: "AI", roll: "2025(S)-AI-29", category: "Premium", status: "Arrived" },
+            { name: "AROOJ FATIMA", department: "AI", roll: "2025(S)-AI-16", category: "Premium", status: "Arrived" },
+            { name: "AHMAD RAUF", department: "AI", roll: "2025-AI-27", category: "Premium", status: "Arrived" },
+            { name: "ABDUL REHMAN", department: "AI", roll: "2025(S)-AI-141", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD USMAN", department: "AI", roll: "2025(S)-AI-138", category: "Premium", status: "Arrived" },
+            { name: "M.AMIR CHEEMA", department: "AI", roll: "2025(S)-AI-170", category: "Premium", status: "Arrived" },
+            { name: "SHANZA FATIMA", department: "AI", roll: "2025(S)-AI-12", category: "Premium", status: "Arrived" },
+            { name: "M.ARSLAN RAZZAQ", department: "AI", roll: "2025-AI-389", category: "Premium", status: "Arrived" },
+            { name: "SYED JAZIM HUSSAIN", department: "AI", roll: "2025-AI-420", category: "Premium", status: "Arrived" },
+            { name: "M.MAAZ SULTAN", department: "AI", roll: "2025-AI-39", category: "Premium", status: "Arrived" },
+            { name: "ABDULLAH AMIR", department: "AI", roll: "2025-AI-405", category: "Premium", status: "Arrived" },
+            { name: "SHAHMEER ASIF", department: "AI", roll: "2025(S)-AI-23", category: "Premium", status: "Arrived" },
+            { name: "ABDULLAH BIN ABBAS", department: "AI", roll: "2025(S)-AI-30", category: "Premium", status: "Arrived" },
+            { name: "OKASAH MUNIR", department: "AI", roll: "2025(S)-AI-34", category: "Premium", status: "Arrived" },
+            { name: "AYESHA", department: "AI", roll: "2025(S)-AI-04", category: "Premium", status: "Arrived" },
+            { name: "SIDRA", department: "AI", roll: "2025(S)-AI-14", category: "Premium", status: "Arrived" },
+            { name: "ZAINAB", department: "AI", roll: "2025(S)-AI-05", category: "Premium", status: "Arrived" },
+            { name: "HASHIM UMER", department: "AI", roll: "2025(S)-AI-31", category: "Premium", status: "Arrived" },
+            { name: "IMAMA TAHIR", department: "AI", roll: "2025(S)-AI-02", category: "Premium", status: "Arrived" },
+            { name: "AYESHA HAQUE", department: "AI", roll: "", category: "Premium", status: "Arrived" },
+            { name: "AIMA FATIMA", department: "AI", roll: "2025(S)-AI-03", category: "Premium", status: "Arrived" },
+            { name: "ANAS", department: "AI", roll: "2025(S)-AI-107", category: "Premium", status: "Arrived" },
+            { name: "FIZA NOOR", department: "AI", roll: "2025(S)-AI-08", category: "Premium", status: "Arrived" },
+            { name: "SAMEESHA", department: "AI", roll: "2025(S)-AI-17", category: "Premium", status: "Arrived" },
+            { name: "IMAM AHMAD", department: "AI", roll: "2025(S)-AI-28", category: "Premium", status: "Arrived" },
+            { name: "HAMID RAZA", department: "AI", roll: "2025(S)-AI-47", category: "Premium", status: "Arrived" },
+            { name: "H.H.MUBASHAR", department: "AI", roll: "2025(S)-AI-171", category: "Premium", status: "Arrived" },
+            { name: "UMER QURESHI", department: "AI", roll: "2025-AI-104", category: "Premium", status: "Arrived" },
+            { name: "QAMAR ZAMAN", department: "AI", roll: "2025-AI-112", category: "Standard", status: "Arrived" },
+            { name: "NAUREZ KHAN", department: "AI", roll: "2025-AI-213", category: "Standard", status: "Arrived" },
+            { name: "ABDUREHMAN", department: "AI", roll: "2025-AI-111", category: "Standard", status: "Arrived" },
+            { name: "HASEEB JAVED", department: "BBA", roll: "2025-BBA-367", category: "Standard", status: "Arrived" },
+            { name: "KAIF TAHIR", department: "CH", roll: "2025-CH-43", category: "Premium", status: "Arrived" },
+            { name: "FARHAN ALI", department: "CH", roll: "2025-CH-81", category: "Premium", status: "Arrived" },
+            { name: "AHSAN SHAHZAD", department: "CH", roll: "2025-CH-15", category: "Premium", status: "Arrived" },
+            { name: "AMMAR AHMAD", department: "CH", roll: "2025-CH-06", category: "Standard", status: "Arrived" },
+            { name: "MOHAD AHMED", department: "CH", roll: "2025-CH-35", category: "Standard", status: "Arrived" },
+            { name: "AYMAN BUTT", department: "CH", roll: "2025-CH-64", category: "Standard", status: "Arrived" },
+            { name: "AWAIS AJMAL", department: "CH", roll: "2025-CH-70", category: "Standard", status: "Arrived" },
+            { name: "HAMAAD ALI", department: "CS", roll: "2025-IST-120", category: "Premium", status: "Arrived" },
+            { name: "SAMEEDA SHAH", department: "CS", roll: "2025-IST-151", category: "Premium", status: "Arrived" },
+            { name: "REHAN AHMED", department: "CS", roll: "2025-CS-598", category: "Premium", status: "Arrived" },
+            { name: "ALI HASSAN", department: "CS", roll: "2025-CS-307", category: "Premium", status: "Arrived" },
+            { name: "ARSHMAN ALI", department: "CS", roll: "2025-CS-22", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD HUZAIFA", department: "CS", roll: "2025-CS-43", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD UZAIR", department: "CS", roll: "2025-CS-172", category: "Premium", status: "Arrived" },
+            { name: "H15.AYMAN", department: "CS", roll: "2025-CH-64", category: "Premium", status: "Arrived" },
+            { name: "SHEIKH BILAL", department: "CS", roll: "2025-CS-288", category: "Premium", status: "Arrived" },
+            { name: "ABDUL MANAN", department: "CS", roll: "2025(S)-CS-84", category: "Premium", status: "Arrived" },
+            { name: "BILAL JAVED", department: "CS", roll: "2025(S)-CS-81", category: "Premium", status: "Arrived" },
+            { name: "M.MUEEB RIAZ", department: "CS", roll: "2025(S)-CS-102", category: "Premium", status: "Arrived" },
+            { name: "RAO MAJID ALI KHAN", department: "CS", roll: "2025(S)-CS-61", category: "Premium", status: "Arrived" },
+            { name: "RANA ABDULLAH", department: "CS", roll: "2025(S)-CS-71", category: "Premium", status: "Arrived" },
+            { name: "UMAIR SHAHID", department: "CS", roll: "2021-CS-144", category: "Premium", status: "Arrived" },
+            { name: "M HASNAIN KHALID", department: "CS", roll: "2025-CS-462", category: "Standard", status: "Arrived" },
+            { name: "M.FASEEH HAIDER", department: "CS", roll: "2025-CS-269", category: "Standard", status: "Arrived" },
+            { name: "HAMID RAZA", department: "CYS", roll: "2025(S)-CYS-95", category: "Premium", status: "Arrived" },
+            { name: "HASEEB-UL-HASSAN", department: "CYS", roll: "2025(S)-CYS-101", category: "Premium", status: "Arrived" },
+            { name: "RAHEEL", department: "CYS", roll: "2025(S)-CYS-42", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD ARHAM", department: "CYS", roll: "2025-CYS-98", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD DANISH", department: "CYS", roll: "2025-CYS-111", category: "Premium", status: "Arrived" },
+            { name: "F.HASSAN GILANI", department: "CYS", roll: "2025-CYS-171", category: "Premium", status: "Arrived" },
+            { name: "M.UMER RAZA", department: "DS", roll: "2025-DS-210", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD HUSSAIN", department: "DS", roll: "2025(S)-DS-22", category: "Premium", status: "Arrived" },
+            { name: "KASHAN", department: "DS", roll: "2025-DS-206", category: "Premium", status: "Arrived" },
+            { name: "BHUTTA", department: "DS", roll: "2025(S)-DS-105", category: "Premium", status: "Arrived" },
+            { name: "HUSSNAIN", department: "DS", roll: "2025(S)-DS-22", category: "Premium", status: "Arrived" },
+            { name: "FAIZAN", department: "DS", roll: "2025(S)-DS-05", category: "Premium", status: "Arrived" },
+            { name: "ABDUL WAHAB", department: "DS", roll: "2025(S)-DS-76", category: "Premium", status: "Arrived" },
+            { name: "ABDUR RAFAY", department: "DS", roll: "2025(S)-DS-60", category: "Premium", status: "Arrived" },
+            { name: "NAJAB ABBAS", department: "DS", roll: "2025-DS-288", category: "Standard", status: "Arrived" },
+            { name: "HASSAN BUTT", department: "EE", roll: "2025-EE-36", category: "Premium", status: "Arrived" },
+            { name: "JOHAR ALI", department: "EE", roll: "2021-EE-131", category: "Premium", status: "Arrived" },
+            { name: "SYED ABDULLAH SALMAN", department: "EE", roll: "2024-EE-182", category: "Standard", status: "Arrived" },
+            { name: "HARIS AZIZ", department: "EE", roll: "2024-EE-190", category: "Standard", status: "Arrived" },
+            { name: "ASAD ULLAH", department: "EE", roll: "2022-EE-173", category: "Standard", status: "Arrived" },
+            { name: "AFZAL KHURSHID", department: "EE", roll: "2022-EE-193", category: "Standard", status: "Arrived" },
+            { name: "NOMAN GUJJAR", department: "ENV", roll: "2025-ENV-02", category: "Premium", status: "Arrived" },
+            { name: "HAFIZA IMAMA", department: "ES", roll: "2025-ES-22", category: "Premium", status: "Arrived" },
+            { name: "HAFIZA ISMA", department: "ESM", roll: "2024-ESM-31", category: "Premium", status: "Arrived" },
+            { name: "MALIK ALI", department: "ESM", roll: "2023-ESM-07", category: "Premium", status: "Arrived" },
+            { name: "ZUMAR CHAUDHRY", department: "IBM", roll: "2025-BBIT-210", category: "Standard", status: "Arrived" },
+            { name: "MUHAMMAD SARIM", department: "IME", roll: "2025-IME-129", category: "Premium", status: "Arrived" },
+            { name: "MIRZA M ALI", department: "IME", roll: "2022-IME-21", category: "Standard", status: "Arrived" },
+            { name: "M.HUZAIFAH HAFEEZ", department: "IST", roll: "2025-IST-134", category: "Premium", status: "Arrived" },
+            { name: "M.REHAN SHAHID", department: "IST", roll: "2025-IST-141", category: "Premium", status: "Arrived" },
+            { name: "AISAM", department: "IST", roll: "2025-IST-104", category: "Premium", status: "Arrived" },
+            { name: "SAIF UR REHMAN", department: "IST", roll: "2025-IST-150", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD ABDULLAH", department: "MC", roll: "2025-MC-87", category: "Premium", status: "Arrived" },
+            { name: "ABDUL KARIM", department: "MC", roll: "2025-MC-09", category: "Premium", status: "Arrived" },
+            { name: "SAIM NAZIM", department: "ME", roll: "2025-ME-188", category: "Premium", status: "Arrived" },
+            { name: "ZAEEM MANSHA", department: "ME", roll: "2023-ME-347", category: "Premium", status: "Arrived" },
+            { name: "ABDUL AHAD", department: "ME", roll: "2025-Me-57", category: "Standard", status: "Arrived" },
+            { name: "ALI ASMAR", department: "ME", roll: "2025-ME-159", category: "Standard", status: "Arrived" },
+            { name: "HUZAIFA", department: "ME", roll: "2022-ME-119", category: "Standard", status: "Arrived" },
+            { name: "HARIS SARWAR", department: "RIS", roll: "2025-RIS-83", category: "Standard", status: "Arrived" },
+            { name: "MALIK USMAN", department: "SE", roll: "2025-SE-08", category: "Premium", status: "Arrived" },
+            { name: "QADEES ASGHAR", department: "SE", roll: "2025-SE-139", category: "Premium", status: "Arrived" },
+            { name: "TAYYAB MASOOD", department: "SE", roll: "2025-SE-163", category: "Premium", status: "Arrived" },
+            { name: "MALIHA JABEEN", department: "SE", roll: "2025(S)-SE-34", category: "Premium", status: "Arrived" },
+            { name: "MUNEEB QURESHI", department: "SE", roll: "2025(S)-SE-43", category: "Premium", status: "Arrived" },
+            { name: "ABDULLAH", department: "SE", roll: "2025-SE-232", category: "Standard", status: "Arrived" },
+            { name: "AHSAN IMRAN", department: "AI", roll: "2025-AI-109", category: "Premium", status: "Arrived" },
+            { name: "M. AWAIS RAZA", department: "AI", roll: "2025-AI-141", category: "Premium", status: "Arrived" },
+            { name: "BILAL MIRZA", department: "AI", roll: "2025-AI-299", category: "Premium", status: "Arrived" },
+            { name: "TUBA MUBASHAR", department: "AI", roll: "2025-AI-374", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD UMER", department: "AI", roll: "2025-AI-40", category: "Standard", status: "Arrived" },
+            { name: "ABDUL MATEEN", department: "AI", roll: "2025-AI-395", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD RUMMAN", department: "AU", roll: "2025-AU-07", category: "Premium", status: "Arrived" },
+            { name: "QASIM SALAHUDDIN", department: "CIV", roll: "2022-CIV-20", category: "Premium", status: "Arrived" },
+            { name: "ARHAM SANDHU", department: "CS", roll: "2025(S)-CS-149", category: "Premium", status: "Arrived" },
+            { name: "BASHAIR GHAFFAR", department: "CS", roll: "2025-CS-107", category: "Premium", status: "Arrived" },
+            { name: "TAIMOOR SAJID", department: "CYS", roll: "2025(S)-CYS-52", category: "Premium", status: "Arrived" },
+            { name: "RANA HAMMAD IQBAL", department: "CYS", roll: "2025(S)-CYS-22", category: "Premium", status: "Arrived" },
+            { name: "SHEIKH ANEES", department: "CYS", roll: "2025(S)-CYS-44", category: "Premium", status: "Arrived" },
+            { name: "M.ABDULLAH SHOUKAT", department: "CYS", roll: "2025(S)-CYS-28", category: "Premium", status: "Arrived" },
+            { name: "RANA SHAHZAIB", department: "CYS", roll: "2025-CYS-75", category: "Premium", status: "Arrived" },
+            { name: "HASEEB AHMAD", department: "CYS", roll: "2025(S)-CYS-27", category: "Standard", status: "Arrived" },
+            { name: "NALAIN MUHAMMAD", department: "DS", roll: "2025-DS-30", category: "Premium", status: "Arrived" },
+            { name: "CH.HASSSAN ALI", department: "DS", roll: "2025(S)-DS-65", category: "Premium", status: "Arrived" },
+            { name: "TAYYAB USMAN", department: "DS", roll: "2025(S)-DS-202", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD ABDULLAH", department: "DS", roll: "2025(S)-DS-78", category: "Premium", status: "Arrived" },
+            { name: "ABDULREHAMN", department: "DS", roll: "2025(S)-DS-95", category: "Premium", status: "Arrived" },
+            { name: "M REHAN ASIF", department: "DS", roll: "2025(S)-DS-25", category: "Premium", status: "Arrived" },
+            { name: "TAYYAB AMJAD", department: "DS", roll: "2025-CS-421", category: "Premium", status: "Arrived" },
+            { name: "MUHAMMAD IBRAHIM", department: "MC", roll: "2025-MC-75", category: "Premium", status: "Arrived" },
+            { name: "CH BILAL", department: "MC", roll: "2025-MC-65", category: "Premium", status: "Arrived" },
+            { name: "NAYYAB BUTTER", department: "ME", roll: "2025-ME-270", category: "Standard", status: "Arrived" },
+            { name: "WASIF ABBAS", department: "MIN", roll: "2025(S)-MIN-06", category: "Premium", status: "Arrived" },
+            { name: "ALI HASNAIN", department: "PE", roll: "17", category: "Premium", status: "Arrived" },
+            { name: "AMMAR", department: "Unknown", roll: "Maryam ref.", category: "Standard", status: "Arrived" }
+        ];
+
+        // This line will now be forced to use the 'initialOrders' above
+        // because the old 'tricoreOrders' from localStorage was deleted by the cache fix.
+        let orders = JSON.parse(localStorage.getItem('tricoreOrders')) || initialOrders;
+
+        // DOM Elements
+        const userSection = document.getElementById('user-section');
+        const adminLoginSection = document.getElementById('admin-login-section');
+        const adminPanel = document.getElementById('admin-panel');
+        const checkStatusBtn = document.getElementById('check-status');
+        const userNameInput = document.getElementById('user-name');
+        const userDepartmentInput = document.getElementById('user-department');
+        const statusResult = document.getElementById('status-result');
+        const adminLoginBtn = document.getElementById('admin-login');
+        const adminUsernameInput = document.getElementById('admin-username');
+        const adminPasswordInput = document.getElementById('admin-password');
+        const adminLogoutBtn = document.getElementById('admin-logout');
+        const ordersBody = document.getElementById('orders-body');
+        const searchOrderInput = document.getElementById('search-order');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const addOrderBtn = document.getElementById('add-order-btn');
+        const newNameInput = document.getElementById('new-name');
+        const newDepartmentInput = document.getElementById('new-department');
+        const newRollInput = document.getElementById('new-roll');
+        const newCategoryInput = document.getElementById('new-category');
+        const newStatusInput = document.getElementById('new-status');
+
+        // Check order status for users
+        checkStatusBtn.addEventListener('click', () => {
+            const name = userNameInput.value.trim().toUpperCase();
+            const department = userDepartmentInput.value;
+            
+            if (!name) {
+                statusResult.innerHTML = '<p style="color: var(--danger);">Please enter your name.</p>';
+                return;
+            }
+
+            // Find orders matching the name
+            let matchingOrders = orders.filter(o => o.name.toUpperCase() === name);
+            
+            // If department is provided, filter further
+            if (department) {
+                matchingOrders = matchingOrders.filter(o => o.department === department);
+            }
+            
+            if (matchingOrders.length === 1) {
+                const order = matchingOrders[0];
+                displayOrderStatus(order);
+            } else if (matchingOrders.length > 1) {
+                // Multiple orders found
+                if (!department) {
+                    statusResult.innerHTML = `
+                        <div class="multiple-results">
+                            <h3>Multiple orders found with name: ${name}</h3>
+                            <p>Please select your department to see your specific order:</p>
+                            <ul>
+                                ${matchingOrders.map(order => `<li>${order.department} - ${order.roll}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    statusResult.innerHTML = '<p style="color: var(--danger);">Multiple orders found with that name and department. Please contact support.</p>';
+                }
+            } else {
+                statusResult.innerHTML = '<p style="color: var(--danger);">No order found. Please check your entry or contact support.</p>';
+            }
+        });
+
+        // Display order status
+        function displayOrderStatus(order) {
+            let message = '';
+            let statusClass = '';
+            
+            switch(order.status) {
+                case 'Completed':
+                    message = `
+                        <div class="welcome-message">
+                            <h3>Welcome to Tricore HIB!</h3>
+                            <p>Your order is ready. Thank you for choosing Tricore HIB premium keychains!</p>
+                        </div>
+                    `;
+                    statusClass = 'status-completed';
+                    break;
+                case 'Arrived':
+                    message = `
+                        <div class="arrived-message">
+                            <h3>Great News!</h3>
+                            <p>Your Tricore HIB order has arrived and is ready for pickup!</p>
+                            <p>Please contact on this mobile number 0325 1979644 for Delivery!</p>
+                        </div>
+                    `;
+                    statusClass = 'status-arrived';
+                    break;
+                case 'Delivered':
+                    message = `
+                        <div class="delivered-message">
+                            <h3>Order Delivered!</h3>
+                            <p>Your Tricore HIB order has been delivered. Enjoy your premium keychain!</p>
+                        </div>
+                    `;
+                    statusClass = 'status-delivered';
+                    break;
+                case 'Pending': // Added case for Pending
+                    message = `
+                        <div class="pending-message">
+                            <h3>Order Pending</h3>
+                            <p>Your Tricore HIB order has been placed and is currently pending.</p>
+                            <p>We will notify you once it arrives!</p>
+                        </div>
+                    `;
+                    statusClass = 'status-pending';
+                    break;
+                default:
+                    statusClass = 'status-pending';
+            }
+            
+            // Create status timeline
+            const statusTimeline = createStatusTimeline(order.status);
+            
+            statusResult.innerHTML = `
+                ${message}
+                <div class="card">
+                    <h3>Order Details</h3>
+                    <p><strong>Name:</strong> ${order.name}</p>
+                    <p><strong>Department:</strong> ${order.department}</p>
+                    <p><strong>Roll Number:</strong> ${order.roll}</p>
+                    <p><strong>Category:</strong> ${order.category}</p>
+                    <p><strong>Status:</strong> <span class="${statusClass}">${order.status}</span></p>
+                    ${statusTimeline}
+                </div>
+            `;
+        }
+
+        // Create status timeline
+        function createStatusTimeline(currentStatus) {
+            const statuses = ['Pending', 'Arrived', 'Delivered', 'Completed'];
+            const statusLabels = {
+                'Pending': 'Order Placed',
+                'Arrived': 'Arrived',
+                'Delivered': 'Delivered',
+                'Completed': 'Completed'
+            };
+            
+            let timelineHtml = `
+                <div class="status-timeline">
+            `;
+            
+            statuses.forEach((status, index) => {
+                let stepClass = '';
+                if (status === currentStatus) {
+                    stepClass = 'active';
+                     if (status === 'Arrived') stepClass = 'arrived active';
+                     if (status === 'Delivered') stepClass = 'delivered active';
+                     if (status === 'Pending') stepClass = 'pending active';
+                     if (status === 'Completed') stepClass = 'completed active';
+                } else if (statuses.indexOf(currentStatus) > index) {
+                    stepClass = 'completed';
+                }
+                
+                timelineHtml += `
+                    <div class="status-step ${stepClass}">
+                        <div class="status-indicator">${index + 1}</div>
+                        <div>${statusLabels[status]}</div>
+                    </div>
+                `;
+            });
+            
+            timelineHtml += `</div>`;
+            return timelineHtml;
+        }
+
+        // Admin login
+        adminLoginBtn.addEventListener('click', () => {
+            const username = adminUsernameInput.value;
+            const password = adminPasswordInput.value;
+            
+            // Simple authentication (in a real app, this would be server-side)
+            if (username === 'adminadmin' && password === 'password123') {
+                adminLoginSection.style.display = 'none';
+                adminPanel.style.display = 'block';
+                renderOrdersTable();
+            } else {
+                alert('Invalid credentials.');
+            }
+        });
+
+        // Admin logout
+        adminLogoutBtn.addEventListener('click', () => {
+            adminPanel.style.display = 'none';
+            adminLoginSection.style.display = 'block';
+            adminUsernameInput.value = '';
+            adminPasswordInput.value = '';
+        });
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update active content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === `${tabId}-tab`) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // Render orders table
+        function renderOrdersTable(filteredOrders = orders) {
+            ordersBody.innerHTML = '';
+            
+            filteredOrders.forEach((order, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.name}</td>
+                    <td>${order.department}</td>
+                    <td>${order.roll}</td>
+                    <td>${order.category}</td>
+                    <td>
+                        <select class="status-select" data-index="${index}">
+                            <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="Arrived" ${order.status === 'Arrived' ? 'selected' : ''}>Arrived</option>
+                            <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger delete-order" data-index="${index}">Delete</button>
+                    </td>
+                `;
+                ordersBody.appendChild(row);
+            });
+            
+            // Add event listeners for status changes
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    // Find the original index in the main 'orders' array
+                    const originalOrder = filteredOrders[index];
+                    const originalIndex = orders.findIndex(o => o.name === originalOrder.name && o.roll === originalOrder.roll);
+                    if (originalIndex !== -1) {
+                         orders[originalIndex].status = e.target.value;
+                         saveOrders();
+                    }
+                });
+            });
+            
+            // Add event listeners for delete buttons
+            document.querySelectorAll('.delete-order').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    if (confirm('Are you sure you want to delete this order?')) {
+                        // Find the original index in the main 'orders' array
+                        const originalOrder = filteredOrders[index];
+                        const originalIndex = orders.findIndex(o => o.name === originalOrder.name && o.roll === originalOrder.roll);
+                        if(originalIndex !== -1) {
+                            orders.splice(originalIndex, 1);
+                            saveOrders();
+                            // Re-render the table with the current filter
+                            searchOrderInput.dispatchEvent(new Event('input'));
+                        }
+                    }
+                });
+            });
+        }
+
+        // Search orders
+        searchOrderInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredOrders = orders.filter(order => 
+                order.name.toLowerCase().includes(searchTerm) || 
+                order.roll.toLowerCase().includes(searchTerm)
+            );
+            renderOrdersTable(filteredOrders);
+        });
+
+        // Add new order
+        addOrderBtn.addEventListener('click', () => {
+            const name = newNameInput.value.trim();
+            const department = newDepartmentInput.value;
+            const roll = newRollInput.value.trim();
+            const category = newCategoryInput.value;
+            const status = newStatusInput.value;
+            
+            if (!name || !roll) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            orders.push({
+                name,
+                department,
+                roll,
+                category,
+                status
+            });
+            
+            saveOrders();
+            renderOrdersTable(); // Re-render the full table
+            
+            // Reset form
+            newNameInput.value = '';
+            newRollInput.value = '';
+            newDepartmentInput.value = 'AI';
+            newCategoryInput.value = 'Premium';
+            newStatusInput.value = 'Pending';
+            
+            // Switch to orders tab
+            tabs[0].click();
+        });
+
+        // Save orders to localStorage
+        function saveOrders() {
+            localStorage.setItem('tricoreOrders', JSON.stringify(orders));
+        }
+
+        // Initialize the app
+        function init() {
+            // This function runs on page load.
+            // The cache-clearing logic above already ran.
+            // Now, we check if admin is logged in.
+            const isAdmin = (adminUsernameInput.value === 'adminadmin'); // This is a simple check
+            if (isAdmin) {
+                adminLoginSection.style.display = 'none';
+                adminPanel.style.display = 'block';
+                renderOrdersTable();
+            }
+            
+            // After loading, we must save the 'initialOrders' (the "Arrived" list)
+            // to localStorage *if it's the first time*.
+            if (!localStorage.getItem('tricoreOrders')) {
+                 saveOrders();
+            }
+        }
+
+        // Run initialization
+        init();
+    </script>
+</body>
+</html>
